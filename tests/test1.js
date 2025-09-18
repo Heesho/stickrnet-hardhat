@@ -881,44 +881,44 @@ describe("local: test1", function () {
     console.log("- content created");
   });
 
-  it("User1 curates content", async function () {
+  it("User1 collects content", async function () {
     console.log("******************************************************");
     const res = await multicall.getContentData(wft.address, 1);
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).curateContent(wft.address, 1);
-    console.log("- content curated");
+    await router.connect(user1).collectContent(wft.address, 1);
+    console.log("- content collected");
   });
 
-  it("User1 curates content", async function () {
+  it("User1 collects content", async function () {
     console.log("******************************************************");
     const res = await multicall.getContentData(wft.address, 1);
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).curateContent(wft.address, 1);
-    console.log("- content curated");
+    await router.connect(user1).collectContent(wft.address, 1);
+    console.log("- content collected");
   });
 
-  it("User2 curates content", async function () {
+  it("User2 collects content", async function () {
     console.log("******************************************************");
     const res = await multicall.getContentData(wft.address, 1);
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user2).approve(router.address, amount);
-    await router.connect(user2).curateContent(wft.address, 1);
-    console.log("- content curated");
+    await router.connect(user2).collectContent(wft.address, 1);
+    console.log("- content collected");
   });
 
-  it("User0 curates content", async function () {
+  it("User0 collects content", async function () {
     console.log("******************************************************");
     const res = await multicall.getContentData(wft.address, 1);
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user0).approve(router.address, amount);
-    await router.connect(user0).curateContent(wft.address, 1);
-    console.log("- content curated");
+    await router.connect(user0).collectContent(wft.address, 1);
+    console.log("- content collected");
   });
 
   it("Token Data", async function () {
@@ -927,14 +927,14 @@ describe("local: test1", function () {
     console.log(res);
   });
 
-  it("User1 curates content", async function () {
+  it("User1 collects content", async function () {
     console.log("******************************************************");
     const res = await multicall.getContentData(wft.address, 1);
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).curateContent(wft.address, 1);
-    console.log("- content curated");
+    await router.connect(user1).collectContent(wft.address, 1);
+    console.log("- content collected");
   });
 
   it("Token Data", async function () {

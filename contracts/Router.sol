@@ -42,7 +42,7 @@ interface IContent {
 
     function create(address to, string memory uri) external returns (uint256);
 
-    function curate(address to, uint256 tokenId) external;
+    function collect(address to, uint256 tokenId) external;
 
     function distribute() external;
 }
@@ -87,7 +87,7 @@ contract Router is ReentrancyGuard, Ownable {
     event Router__ContentCreated(
         address indexed token, address indexed content, address indexed account, uint256 tokenId
     );
-    event Router__ContentCurated(
+    event Router__ContentCollected(
         address indexed token, address indexed content, address indexed account, uint256 price, uint256 tokenId
     );
     event Router__AffiliateSet(address indexed account, address indexed affiliate);
@@ -174,7 +174,7 @@ contract Router is ReentrancyGuard, Ownable {
         emit Router__ContentCreated(token, content, msg.sender, tokenId);
     }
 
-    function curateContent(address token, uint256 tokenId) external nonReentrant {
+    function collectContent(address token, uint256 tokenId) external nonReentrant {
         address content = IToken(token).content();
         address quote = ICore(core).quote();
         uint256 price = IContent(content).getNextPrice(tokenId);
@@ -182,9 +182,9 @@ contract Router is ReentrancyGuard, Ownable {
         IERC20(quote).safeTransferFrom(msg.sender, address(this), price);
         _safeApprove(quote, content, price);
 
-        IContent(content).curate(msg.sender, tokenId);
+        IContent(content).collect(msg.sender, tokenId);
 
-        emit Router__ContentCurated(token, content, msg.sender, price, tokenId);
+        emit Router__ContentCollected(token, content, msg.sender, price, tokenId);
     }
 
     function getContentReward(address token) external {

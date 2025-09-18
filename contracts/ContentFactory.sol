@@ -56,7 +56,7 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
     error Content__NotModerator();
 
     event Content__Created(address indexed who, address indexed to, uint256 indexed tokenId, string uri);
-    event Content__Curated(address indexed who, address indexed to, uint256 indexed tokenId, uint256 price);
+    event Content__Collected(address indexed who, address indexed to, uint256 indexed tokenId, uint256 price);
     event Content__UriSet(string uri);
     event Content__IsModeratedSet(bool isModerated);
     event Content__ModeratorsSet(address indexed account, bool isModerator);
@@ -94,7 +94,7 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         emit Content__Created(msg.sender, to, tokenId, tokenUri);
     }
 
-    function curate(address to, uint256 tokenId) external nonReentrant {
+    function collect(address to, uint256 tokenId) external nonReentrant {
         if (to == address(0)) revert Content__ZeroTo();
         if (ownerOf(tokenId) == address(0)) revert Content__InvalidTokenId();
         if (!id_IsApproved[tokenId]) revert Content__NotApproved();
@@ -122,7 +122,7 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         }
         IRewarder(rewarder).deposit(to, nextPrice);
 
-        emit Content__Curated(msg.sender, to, tokenId, nextPrice);
+        emit Content__Collected(msg.sender, to, tokenId, nextPrice);
     }
 
     function distribute() external {
