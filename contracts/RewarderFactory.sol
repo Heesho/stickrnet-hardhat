@@ -8,7 +8,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 contract Rewarder is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    uint256 private constant DURATION = 7 days;
+    uint256 public constant DURATION = 7 days;
+    uint256 public constant PRECISION = 1e18;
 
     address public immutable content;
 
@@ -30,7 +31,6 @@ contract Rewarder is ReentrancyGuard {
     }
 
     error Rewarder__NotContent();
-    error Rewarder__RewardSmallerThanDuration();
     error Rewarder__RewardSmallerThanLeft();
     error Rewarder__NotRewardToken();
     error Rewarder__RewardTokenAlreadyAdded();
@@ -85,17 +85,16 @@ contract Rewarder is ReentrancyGuard {
     }
 
     function notifyRewardAmount(address token, uint256 amount) external nonReentrant updateReward(address(0)) {
-        if (amount < DURATION) revert Rewarder__RewardSmallerThanDuration();
-        if (amount < left(token)) revert Rewarder__RewardSmallerThanLeft();
         if (!token_IsReward[token]) revert Rewarder__NotRewardToken();
+        uint256 leftover = left(token);
+        if (amount < leftover) revert Rewarder__RewardSmallerThanLeft();
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         if (block.timestamp >= token_RewardData[token].periodFinish) {
-            token_RewardData[token].rewardRate = amount / DURATION;
+            token_RewardData[token].rewardRate = amount * PRECISION / DURATION;
         } else {
-            uint256 remaining = token_RewardData[token].periodFinish - block.timestamp;
-            uint256 leftover = remaining * token_RewardData[token].rewardRate;
-            token_RewardData[token].rewardRate = (amount + leftover) / DURATION;
+            uint256 totalReward = amount + leftover;
+            token_RewardData[token].rewardRate = totalReward * PRECISION / DURATION;
         }
         token_RewardData[token].lastUpdateTime = block.timestamp;
         token_RewardData[token].periodFinish = block.timestamp + DURATION;
@@ -126,14 +125,10 @@ contract Rewarder is ReentrancyGuard {
         emit Rewarder__RewardAdded(token);
     }
 
-    function duration() external pure returns (uint256) {
-        return DURATION;
-    }
-
     function left(address token) public view returns (uint256 leftover) {
         if (block.timestamp >= token_RewardData[token].periodFinish) return 0;
         uint256 remaining = token_RewardData[token].periodFinish - block.timestamp;
-        return remaining * token_RewardData[token].rewardRate;
+        return remaining * token_RewardData[token].rewardRate / PRECISION;
     }
 
     function lastTimeRewardApplicable(address token) public view returns (uint256) {
@@ -148,7 +143,7 @@ contract Rewarder is ReentrancyGuard {
             + (
                 (
                     (lastTimeRewardApplicable(token) - token_RewardData[token].lastUpdateTime)
-                        * token_RewardData[token].rewardRate * 1e18
+                        * token_RewardData[token].rewardRate
                 ) / totalSupply
             );
     }
@@ -156,17 +151,14 @@ contract Rewarder is ReentrancyGuard {
     function earned(address account, address token) public view returns (uint256) {
         return (
             (account_Balance[account] * (rewardPerToken(token) - account_Token_LastRewardPerToken[account][token]))
-                / 1e18
+                / PRECISION
         ) + account_Token_Reward[account][token];
     }
 
     function getRewardForDuration(address token) external view returns (uint256) {
-        return token_RewardData[token].rewardRate * DURATION;
+        return token_RewardData[token].rewardRate * DURATION / PRECISION;
     }
 
-    function getRewardTokens() external view returns (address[] memory) {
-        return rewardTokens;
-    }
 }
 
 contract RewarderFactory {

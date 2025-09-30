@@ -6,23 +6,8 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-
-interface ICore {
-    function treasury() external view returns (address);
-}
-
-interface IContentFactory {
-    function create(
-        string memory name,
-        string memory symbol,
-        string memory uri,
-        address token,
-        address quote,
-        address rewarderFactory,
-        address owner,
-        bool isModerated
-    ) external returns (address, address);
-}
+import {ICore} from "./interfaces/ICore.sol";
+import {IContentFactory} from "./interfaces/IContentFactory.sol";
 
 contract Token is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard {
     using FixedPointMathLib for uint256;
@@ -197,16 +182,6 @@ contract Token is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard {
         emit Token__Burn(msg.sender, tokenAmt);
     }
 
-    function rawToWad(uint256 raw) public view returns (uint256) {
-        unchecked {
-            return raw * quoteScale;
-        }
-    }
-
-    function wadToRaw(uint256 wad) public view returns (uint256) {
-        return wad / quoteScale;
-    }
-
     function _processBuy(uint256 quoteRawIn, uint256 minTokenAmtOut)
         internal
         returns (uint256 tokenAmtOut, uint256 feeRaw)
@@ -353,15 +328,25 @@ contract Token is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard {
         super._burn(account, amount);
     }
 
+    function rawToWad(uint256 raw) public view returns (uint256) {
+        unchecked {
+            return raw * quoteScale;
+        }
+    }
+
+    function wadToRaw(uint256 wad) public view returns (uint256) {
+        return wad / quoteScale;
+    }
+
     function getMarketPrice() external view returns (uint256 price) {
         if (reserveTokenAmt == 0) return 0;
         uint256 totalQuoteWad = reserveVirtQuoteWad + reserveRealQuoteWad;
-        return totalQuoteWad.mulWadDown(PRECISION).divWadDown(reserveTokenAmt);
+        return totalQuoteWad.divWadDown(reserveTokenAmt);
     }
 
     function getFloorPrice() external view returns (uint256 price) {
         if (maxSupply == 0) return 0;
-        return reserveVirtQuoteWad.mulWadDown(PRECISION).divWadDown(maxSupply);
+        return reserveVirtQuoteWad.divWadDown(maxSupply);
     }
 
     function getAccountCredit(address account) public view returns (uint256 creditRaw) {

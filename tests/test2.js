@@ -186,15 +186,12 @@ describe("local: test2", function () {
         .connect(owner)
         .notifyContentRewardAmount(wft0.address, usdc.address, convert("1", 6))
     ).to.be.revertedWith("Rewarder__RewardSmallerThanLeft");
+
+    await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+    await network.provider.send("evm_mine");
     await usdc.connect(owner).approve(router.address, convert("0.1", 6));
-    await expect(
-      router
-        .connect(owner)
-        .notifyContentRewardAmount(
-          wft0.address,
-          usdc.address,
-          convert("0.1", 6)
-        )
-    ).to.be.revertedWith("Rewarder__RewardSmallerThanDuration");
+    await router
+      .connect(owner)
+      .notifyContentRewardAmount(wft0.address, usdc.address, convert("0.1", 6));
   });
 });

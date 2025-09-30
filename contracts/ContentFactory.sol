@@ -6,28 +6,9 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface IRewarderFactory {
-    function create(address content) external returns (address);
-}
-
-interface IRewarder {
-    function duration() external view returns (uint256);
-
-    function left(address token) external view returns (uint256);
-
-    function notifyRewardAmount(address token, uint256 amount) external;
-
-    function deposit(address account, uint256 amount) external;
-
-    function withdraw(address account, uint256 amount) external;
-
-    function addReward(address token) external;
-}
-
-interface IToken {
-    function heal(uint256 amount) external;
-}
+import {IRewarderFactory} from "./interfaces/IRewarderFactory.sol";
+import {IRewarder} from "./interfaces/IRewarder.sol";
+import {IToken} from "./interfaces/IToken.sol";
 
 contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
@@ -50,6 +31,7 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
     error Content__ZeroTo();
     error Content__NotCreator();
     error Content__InvalidTokenId();
+    error Content__MaxPriceExceeded();
     error Content__TransferDisabled();
     error Content__NotApproved();
     error Content__AlreadyApproved();
@@ -94,15 +76,17 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         emit Content__Created(msg.sender, to, tokenId, tokenUri);
     }
 
-    function collect(address to, uint256 tokenId) external nonReentrant {
+    function collect(address to, uint256 tokenId, uint256 maxPrice) external nonReentrant {
         if (to == address(0)) revert Content__ZeroTo();
         if (ownerOf(tokenId) == address(0)) revert Content__InvalidTokenId();
         if (!id_IsApproved[tokenId]) revert Content__NotApproved();
 
-        address creator = id_Creator[tokenId];
-        uint256 prevPrice = id_Price[tokenId];
-        address prevOwner = ownerOf(tokenId);
         uint256 nextPrice = getNextPrice(tokenId);
+        if (nextPrice > maxPrice) revert Content__MaxPriceExceeded();
+
+        address creator = id_Creator[tokenId];
+        address prevOwner = ownerOf(tokenId);
+        uint256 prevPrice = id_Price[tokenId];
         uint256 surplus = nextPrice - prevPrice;
 
         id_Price[tokenId] = nextPrice;
@@ -110,12 +94,13 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
 
         IERC20(quote).safeTransferFrom(msg.sender, address(this), nextPrice);
 
-        IERC20(quote).safeTransfer(prevOwner, prevPrice + ((surplus * 3) / 9));
-        IERC20(quote).safeTransfer(creator, (surplus * 3) / 9);
+        IERC20(quote).safeTransfer(prevOwner, prevPrice + (surplus / 3));
+        IERC20(quote).safeTransfer(creator, surplus / 3);
 
+        uint256 healRaw = surplus - (surplus * 2 / 3);
         IERC20(quote).safeApprove(token, 0);
-        IERC20(quote).safeApprove(token, (surplus * 3) / 9);
-        IToken(token).heal((surplus * 3) / 9);
+        IERC20(quote).safeApprove(token, healRaw);
+        IToken(token).heal(healRaw);
 
         if (prevPrice > 0) {
             IRewarder(rewarder).withdraw(prevOwner, prevPrice);
@@ -126,11 +111,9 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
     }
 
     function distribute() external {
-        uint256 duration = IRewarder(rewarder).duration();
-
         uint256 balanceQuote = IERC20(quote).balanceOf(address(this));
         uint256 leftQuote = IRewarder(rewarder).left(quote);
-        if (balanceQuote > leftQuote && balanceQuote > duration) {
+        if (balanceQuote > leftQuote) {
             IERC20(quote).safeApprove(rewarder, 0);
             IERC20(quote).safeApprove(rewarder, balanceQuote);
             IRewarder(rewarder).notifyRewardAmount(quote, balanceQuote);
@@ -138,11 +121,19 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
 
         uint256 balanceToken = IERC20(token).balanceOf(address(this));
         uint256 leftToken = IRewarder(rewarder).left(token);
-        if (balanceToken > leftToken && balanceToken > duration) {
+        if (balanceToken > leftToken) {
             IERC20(token).safeApprove(rewarder, 0);
             IERC20(token).safeApprove(rewarder, balanceToken);
             IRewarder(rewarder).notifyRewardAmount(token, balanceToken);
         }
+    }
+
+    function approve(address, uint256) public virtual override(ERC721, IERC721) {
+        revert Content__TransferDisabled();
+    }
+
+    function setApprovalForAll(address, bool) public virtual override(ERC721, IERC721) {
+        revert Content__TransferDisabled();
     }
 
     function transferFrom(address, address, uint256) public virtual override(ERC721, IERC721) {

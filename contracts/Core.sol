@@ -2,30 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface ITokenFactory {
-    function create(
-        string memory name,
-        string memory symbol,
-        string memory uri,
-        address core,
-        address quote,
-        uint256 initialSupply,
-        uint256 reserveVirtQuoteRaw,
-        address contentFactory,
-        address rewarderFactory,
-        address owner,
-        bool isModerated
-    ) external returns (address token);
-}
-
-interface IToken {
-    function sale() external view returns (address);
-
-    function content() external view returns (address);
-
-    function rewarder() external view returns (address);
-}
+import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
+import {IToken} from "./interfaces/IToken.sol";
 
 contract Core is Ownable {
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 1e18;

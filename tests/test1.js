@@ -323,36 +323,6 @@ describe("local: test1", function () {
     expect(usdcRemaining).to.be.at.least(await wft.reserveVirtQuoteWad());
   });
 
-  it("Quote buy out", async function () {
-    console.log("******************************************************");
-    const amount = convert("10", 18);
-    let res = await multicall
-      .connect(owner)
-      .buyTokenOut(wft.address, amount, 9700);
-    console.log("WFT out", divDec(amount));
-    console.log("Slippage Tolerance", "3%");
-    console.log();
-    console.log("USDC in", divDec6(res.quoteRawIn));
-    console.log("slippage", divDec(res.slippage));
-    console.log("min Token out", divDec(res.minTokenAmtOut));
-    console.log("min Token out", divDec(res.autoMinTokenAmtOut));
-  });
-
-  it("Quote sell out", async function () {
-    console.log("******************************************************");
-    const amount = convert("10", 6);
-    let res = await multicall
-      .connect(owner)
-      .sellQuoteOut(wft.address, amount, 9950);
-    console.log("USDC out", divDec6(amount));
-    console.log("Slippage Tolerance", "0.5%");
-    console.log();
-    console.log("WFT in", divDec(res.tokenAmtIn));
-    console.log("slippage", divDec(res.slippage));
-    console.log("min USDC out", divDec6(res.minQuoteRawOut));
-    console.log("min USDC out", divDec6(res.autoMinQuoteRawOut));
-  });
-
   it("Token Data", async function () {
     console.log("******************************************************");
     let res = await multicall.getTokenData(wft.address, user2.address);
@@ -887,7 +857,7 @@ describe("local: test1", function () {
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    await router.connect(user1).collectContent(wft.address, 1, amount);
     console.log("- content collected");
   });
 
@@ -897,7 +867,7 @@ describe("local: test1", function () {
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    await router.connect(user1).collectContent(wft.address, 1, amount);
     console.log("- content collected");
   });
 
@@ -907,7 +877,7 @@ describe("local: test1", function () {
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user2).approve(router.address, amount);
-    await router.connect(user2).collectContent(wft.address, 1);
+    await router.connect(user2).collectContent(wft.address, 1, amount);
     console.log("- content collected");
   });
 
@@ -917,7 +887,7 @@ describe("local: test1", function () {
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user0).approve(router.address, amount);
-    await router.connect(user0).collectContent(wft.address, 1);
+    await router.connect(user0).collectContent(wft.address, 1, amount);
     console.log("- content collected");
   });
 
@@ -933,7 +903,7 @@ describe("local: test1", function () {
     console.log(res);
     const amount = res.nextPrice;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    await router.connect(user1).collectContent(wft.address, 1, amount);
     console.log("- content collected");
   });
 
