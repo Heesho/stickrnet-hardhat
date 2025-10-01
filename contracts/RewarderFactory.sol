@@ -159,6 +159,10 @@ contract Rewarder is ReentrancyGuard {
         return token_RewardData[token].rewardRate * DURATION / PRECISION;
     }
 
+    function getRewardTokens() external view returns (address[] memory) {
+        return rewardTokens;
+    }
+
 }
 
 contract RewarderFactory {
