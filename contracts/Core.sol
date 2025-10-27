@@ -2,34 +2,16 @@
 pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface ITokenFactory {
-    function create(
-        string memory name,
-        string memory symbol,
-        string memory uri,
-        address core,
-        address quote,
-        uint256 initialSupply,
-        uint256 reserveVirtQuoteRaw,
-        address contentFactory,
-        address rewarderFactory,
-        address owner,
-        bool isModerated
-    ) external returns (address token);
-}
-
-interface IToken {
-    function sale() external view returns (address);
-
-    function content() external view returns (address);
-
-    function rewarder() external view returns (address);
-}
+import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ITokenFactory} from "./interfaces/ITokenFactory.sol";
+import {IToken} from "./interfaces/IToken.sol";
 
 contract Core is Ownable {
+    using SafeERC20 for IERC20;
+
     uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 1e18;
     uint256 public constant RESERVE_VIRT_QUOTE_RAW = 100_000 * 1e6;
+    uint256 public constant CONTENT_MIN_INIT_PRICE = 1e6;
 
     address public immutable quote;
 
@@ -41,6 +23,8 @@ contract Core is Ownable {
     uint256 public index;
     mapping(uint256 => address) public index_Token;
     mapping(address => uint256) public token_Index;
+
+    error Core__InsufficientTokensMinted();
 
     event Core__TokenCreated(
         string name,
@@ -66,10 +50,15 @@ contract Core is Ownable {
         rewarderFactory = _rewarderFactory;
     }
 
-    function create(string memory name, string memory symbol, string memory uri, address owner, bool isModerated)
-        external
-        returns (address token)
-    {
+    function create(
+        string memory name,
+        string memory symbol,
+        string memory uri,
+        address owner,
+        bool isModerated,
+        uint256 quoteRawIn,
+        uint256 coreTokenAmtRequired
+    ) external returns (address token) {
         index++;
 
         token = ITokenFactory(tokenFactory).create(
@@ -83,11 +72,18 @@ contract Core is Ownable {
             contentFactory,
             rewarderFactory,
             owner,
+            CONTENT_MIN_INIT_PRICE,
             isModerated
         );
 
         index_Token[index] = token;
         token_Index[token] = index;
+
+        IERC20(quote).safeTransferFrom(msg.sender, address(this), quoteRawIn);
+        IERC20(quote).safeApprove(token, 0);
+        IERC20(quote).safeApprove(token, quoteRawIn);
+        IToken(token).buy(quoteRawIn, 0, 0, address(this), address(0));
+        IERC20(token).safeTransfer(owner, IERC20(token).balanceOf(address(this)) - coreTokenAmtRequired);
 
         emit Core__TokenCreated(
             name, symbol, uri, index, token, IToken(token).content(), IToken(token).rewarder(), owner, isModerated

@@ -4,57 +4,15 @@ pragma solidity 0.8.19;
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface ICore {
-    function quote() external view returns (address);
-
-    function create(string calldata name, string calldata symbol, string calldata uri, address owner, bool isModerated)
-        external
-        returns (address token);
-}
-
-interface IToken {
-    function content() external view returns (address);
-
-    function sale() external view returns (address);
-
-    function rewarder() external view returns (address);
-
-    function buy(
-        uint256 amountQuoteIn,
-        uint256 minAmountTokenOut,
-        uint256 expireTimestamp,
-        address to,
-        address provider
-    ) external returns (uint256 amountTokenOut);
-
-    function sell(
-        uint256 amountTokenIn,
-        uint256 minAmountQuoteOut,
-        uint256 expireTimestamp,
-        address to,
-        address provider
-    ) external returns (uint256 amountQuoteOut);
-}
-
-interface IContent {
-    function getNextPrice(uint256 tokenId) external view returns (uint256);
-
-    function create(address to, string memory uri) external returns (uint256);
-
-    function collect(address to, uint256 tokenId) external;
-
-    function distribute() external;
-}
-
-interface IRewarder {
-    function getReward(address account) external;
-
-    function notifyRewardAmount(address token, uint256 amount) external;
-}
+import {ICore} from "./interfaces/ICore.sol";
+import {IToken} from "./interfaces/IToken.sol";
+import {IContent} from "./interfaces/IContent.sol";
+import {IRewarder} from "./interfaces/IRewarder.sol";
 
 contract Router is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
+
+    uint256 public constant CORE_TOKEN_AMT_REQUIRED = 1e18;
 
     address public immutable core;
 
@@ -67,8 +25,7 @@ contract Router is ReentrancyGuard, Ownable {
         address indexed token,
         address indexed creator,
         bool isModerated,
-        uint256 amountQuoteIn,
-        uint256 amountTokenOut
+        uint256 amountQuoteIn
     );
     event Router__Buy(
         address indexed token,
@@ -103,22 +60,12 @@ contract Router is ReentrancyGuard, Ownable {
         bool isModerated,
         uint256 amountQuoteIn
     ) external nonReentrant returns (address token) {
-        token = ICore(core).create(name, symbol, uri, msg.sender, isModerated);
+        address quote = ICore(core).quote();
+        IERC20(quote).safeTransferFrom(msg.sender, address(this), amountQuoteIn);
+        _safeApprove(quote, core, amountQuoteIn);
+        token = ICore(core).create(name, symbol, uri, msg.sender, isModerated, amountQuoteIn, CORE_TOKEN_AMT_REQUIRED);
 
-        uint256 amountTokenOut;
-        if (amountQuoteIn > 0) {
-            address quote = ICore(core).quote();
-            IERC20(quote).safeTransferFrom(msg.sender, address(this), amountQuoteIn);
-            _safeApprove(quote, token, amountQuoteIn);
-            amountTokenOut = IToken(token).buy(amountQuoteIn, 0, 0, msg.sender, address(0));
-
-            uint256 remainingQuote = IERC20(quote).balanceOf(address(this));
-            if (remainingQuote > 0) {
-                IERC20(quote).safeTransfer(msg.sender, remainingQuote);
-            }
-        }
-
-        emit Router__TokenCreated(name, symbol, uri, token, msg.sender, isModerated, amountQuoteIn, amountTokenOut);
+        emit Router__TokenCreated(name, symbol, uri, token, msg.sender, isModerated, amountQuoteIn);
     }
 
     function buy(
@@ -174,15 +121,18 @@ contract Router is ReentrancyGuard, Ownable {
         emit Router__ContentCreated(token, content, msg.sender, tokenId);
     }
 
-    function collectContent(address token, uint256 tokenId) external nonReentrant {
+    function collectContent(address token, uint256 tokenId, uint256 epochId, uint256 deadline, uint256 maxPrice)
+        external
+        nonReentrant
+    {
         address content = IToken(token).content();
         address quote = ICore(core).quote();
-        uint256 price = IContent(content).getNextPrice(tokenId);
+        uint256 price = IContent(content).getPrice(tokenId);
 
         IERC20(quote).safeTransferFrom(msg.sender, address(this), price);
         _safeApprove(quote, content, price);
 
-        IContent(content).collect(msg.sender, tokenId);
+        IContent(content).collect(msg.sender, tokenId, epochId, deadline, maxPrice);
 
         emit Router__ContentCollected(token, content, msg.sender, price, tokenId);
     }

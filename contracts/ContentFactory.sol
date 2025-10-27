@@ -6,35 +6,24 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
-interface IRewarderFactory {
-    function create(address content) external returns (address);
-}
-
-interface IRewarder {
-    function duration() external view returns (uint256);
-
-    function left(address token) external view returns (uint256);
-
-    function notifyRewardAmount(address token, uint256 amount) external;
-
-    function deposit(address account, uint256 amount) external;
-
-    function withdraw(address account, uint256 amount) external;
-
-    function addReward(address token) external;
-}
-
-interface IToken {
-    function heal(uint256 amount) external;
-}
+import {IRewarderFactory} from "./interfaces/IRewarderFactory.sol";
+import {IRewarder} from "./interfaces/IRewarder.sol";
+import {IToken} from "./interfaces/IToken.sol";
 
 contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
+    uint256 public constant FEE = 1_000;
+    uint256 public constant DIVISOR = 10_000;
+    uint256 public constant PRECISION = 1e18;
+    uint256 public constant EPOCH_PERIOD = 30 days;
+    uint256 public constant PRICE_MULTIPLIER = 2e18;
+    uint256 public constant ABS_MAX_INIT_PRICE = type(uint192).max;
+
     address public immutable rewarder;
     address public immutable token;
     address public immutable quote;
+    uint256 public immutable minInitPrice;
 
     string public uri;
 
@@ -43,13 +32,24 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
 
     uint256 public nextTokenId;
 
-    mapping(uint256 => uint256) public id_Price;
+    mapping(uint256 => uint256) public id_Stake;
     mapping(uint256 => address) public id_Creator;
     mapping(uint256 => bool) public id_IsApproved;
+    mapping(uint256 => Auction) public id_Auction;
+
+    struct Auction {
+        uint16 epochId;
+        uint192 initPrice;
+        uint40 startTime;
+    }
 
     error Content__ZeroTo();
-    error Content__NotCreator();
+    error Content__ZeroLengthUri();
+    error Content__ZeroMinPrice();
     error Content__InvalidTokenId();
+    error Content__Expired();
+    error Content__EpochIdMismatch();
+    error Content__MaxPriceExceeded();
     error Content__TransferDisabled();
     error Content__NotApproved();
     error Content__AlreadyApproved();
@@ -70,11 +70,15 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         address _token,
         address _quote,
         address rewarderFactory,
+        uint256 _minInitPrice,
         bool _isModerated
     ) ERC721(name, symbol) {
+        if (_minInitPrice == 0) revert Content__ZeroMinPrice();
+        if (bytes(_uri).length == 0) revert Content__ZeroLengthUri();
         uri = _uri;
         token = _token;
         quote = _quote;
+        minInitPrice = _minInitPrice;
         isModerated = _isModerated;
         rewarder = IRewarderFactory(rewarderFactory).create(address(this));
         IRewarder(rewarder).addReward(quote);
@@ -83,10 +87,14 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
 
     function create(address to, string memory tokenUri) external nonReentrant returns (uint256 tokenId) {
         if (to == address(0)) revert Content__ZeroTo();
+        if (bytes(tokenUri).length == 0) revert Content__ZeroLengthUri();
 
         tokenId = ++nextTokenId;
         id_Creator[tokenId] = to;
         if (!isModerated) id_IsApproved[tokenId] = true;
+
+        id_Auction[tokenId] =
+            Auction({epochId: 0, initPrice: uint192(minInitPrice), startTime: uint40(block.timestamp)});
 
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenUri);
@@ -94,39 +102,70 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         emit Content__Created(msg.sender, to, tokenId, tokenUri);
     }
 
-    function collect(address to, uint256 tokenId) external nonReentrant {
+    function collect(address to, uint256 tokenId, uint256 epochId, uint256 deadline, uint256 maxPrice)
+        external
+        nonReentrant
+        returns (uint256 price)
+    {
         if (to == address(0)) revert Content__ZeroTo();
         if (ownerOf(tokenId) == address(0)) revert Content__InvalidTokenId();
         if (!id_IsApproved[tokenId]) revert Content__NotApproved();
+        if (block.timestamp > deadline) revert Content__Expired();
+
+        Auction memory auction = id_Auction[tokenId];
+        if (uint16(epochId) != auction.epochId) revert Content__EpochIdMismatch();
+
+        price = getPriceFromCache(auction);
+        if (price > maxPrice) revert Content__MaxPriceExceeded();
 
         address creator = id_Creator[tokenId];
-        uint256 prevPrice = id_Price[tokenId];
         address prevOwner = ownerOf(tokenId);
-        uint256 nextPrice = getNextPrice(tokenId);
-        uint256 surplus = nextPrice - prevPrice;
+        uint256 prevStake = id_Stake[tokenId];
+        uint256 feeRaw = price * FEE / DIVISOR;
+        uint256 healRaw = feeRaw / 2;
 
-        id_Price[tokenId] = nextPrice;
+        uint256 newInitPrice = price * PRICE_MULTIPLIER / PRECISION;
+
+        if (newInitPrice > ABS_MAX_INIT_PRICE) {
+            newInitPrice = ABS_MAX_INIT_PRICE;
+        } else if (newInitPrice < minInitPrice) {
+            newInitPrice = minInitPrice;
+        }
+
+        unchecked {
+            auction.epochId++;
+        }
+        auction.initPrice = uint192(newInitPrice);
+        auction.startTime = uint40(block.timestamp);
+
+        id_Auction[tokenId] = auction;
+        id_Stake[tokenId] = price;
+
         _transfer(prevOwner, to, tokenId);
 
-        IERC20(quote).safeTransferFrom(msg.sender, address(this), nextPrice);
+        if (price > 0) {
+            IERC20(quote).safeTransferFrom(msg.sender, address(this), price);
 
-        IERC20(quote).safeTransfer(prevOwner, prevPrice + ((surplus * 3) / 9));
-        IERC20(quote).safeTransfer(creator, (surplus * 3) / 9);
+            IERC20(quote).safeTransfer(prevOwner, price - feeRaw);
+            IERC20(quote).safeTransfer(creator, feeRaw - healRaw);
 
-        IERC20(quote).safeApprove(token, 0);
-        IERC20(quote).safeApprove(token, (surplus * 3) / 9);
-        IToken(token).heal((surplus * 3) / 9);
+            IERC20(quote).safeApprove(token, 0);
+            IERC20(quote).safeApprove(token, healRaw);
+            IToken(token).heal(healRaw);
 
-        if (prevPrice > 0) {
-            IRewarder(rewarder).withdraw(prevOwner, prevPrice);
+            IRewarder(rewarder).deposit(to, price);
         }
-        IRewarder(rewarder).deposit(to, nextPrice);
+        if (prevStake > 0) {
+            IRewarder(rewarder).withdraw(prevOwner, prevStake);
+        }
 
-        emit Content__Collected(msg.sender, to, tokenId, nextPrice);
+        emit Content__Collected(msg.sender, to, tokenId, price);
+
+        return price;
     }
 
     function distribute() external {
-        uint256 duration = IRewarder(rewarder).duration();
+        uint256 duration = IRewarder(rewarder).DURATION();
 
         uint256 balanceQuote = IERC20(quote).balanceOf(address(this));
         uint256 leftQuote = IRewarder(rewarder).left(quote);
@@ -143,6 +182,14 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
             IERC20(token).safeApprove(rewarder, balanceToken);
             IRewarder(rewarder).notifyRewardAmount(token, balanceToken);
         }
+    }
+
+    function approve(address, uint256) public virtual override(ERC721, IERC721) {
+        revert Content__TransferDisabled();
+    }
+
+    function setApprovalForAll(address, bool) public virtual override(ERC721, IERC721) {
+        revert Content__TransferDisabled();
     }
 
     function transferFrom(address, address, uint256) public virtual override(ERC721, IERC721) {
@@ -209,12 +256,26 @@ contract Content is ERC721, ERC721Enumerable, ERC721URIStorage, ReentrancyGuard,
         super._burn(tokenId);
     }
 
+    function getPriceFromCache(Auction memory auction) public view returns (uint256) {
+        uint256 timePassed = block.timestamp - auction.startTime;
+
+        if (timePassed > EPOCH_PERIOD) {
+            return 0;
+        }
+
+        return auction.initPrice - auction.initPrice * timePassed / EPOCH_PERIOD;
+    }
+
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 
-    function getNextPrice(uint256 tokenId) public view returns (uint256) {
-        return (id_Price[tokenId] * 11) / 10 + 1e6;
+    function getAuction(uint256 tokenId) external view returns (Auction memory) {
+        return id_Auction[tokenId];
+    }
+
+    function getPrice(uint256 tokenId) external view returns (uint256) {
+        return getPriceFromCache(id_Auction[tokenId]);
     }
 }
 
@@ -231,9 +292,10 @@ contract ContentFactory {
         address quote,
         address rewarderFactory,
         address owner,
+        uint256 initialPrice,
         bool isModerated
     ) external returns (address, address) {
-        Content content = new Content(name, symbol, uri, token, quote, rewarderFactory, isModerated);
+        Content content = new Content(name, symbol, uri, token, quote, rewarderFactory, initialPrice, isModerated);
         lastContent = address(content);
         content.transferOwnership(owner);
         emit ContentFactory__Created(lastContent);

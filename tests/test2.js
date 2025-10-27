@@ -78,9 +78,10 @@ describe("local: test2", function () {
     const wftSymbol = "wft0";
     const wftUri = "https://wavefront.io/wft0";
 
+    await usdc.connect(user0).approve(router.address, convert("1", 6));
     await router
       .connect(user0)
-      .createToken(wftName, wftSymbol, wftUri, false, 0);
+      .createToken(wftName, wftSymbol, wftUri, false, convert("1", 6));
     wft0 = await ethers.getContractAt("Token", await tokenFactory.lastToken());
     console.log("- wft0 created");
   });
@@ -195,6 +196,6 @@ describe("local: test2", function () {
           usdc.address,
           convert("0.1", 6)
         )
-    ).to.be.revertedWith("Rewarder__RewardSmallerThanDuration");
+    ).to.be.revertedWith("Rewarder__RewardSmallerThanLeft");
   });
 });

@@ -323,36 +323,6 @@ describe("local: test1", function () {
     expect(usdcRemaining).to.be.at.least(await wft.reserveVirtQuoteWad());
   });
 
-  it("Quote buy out", async function () {
-    console.log("******************************************************");
-    const amount = convert("10", 18);
-    let res = await multicall
-      .connect(owner)
-      .buyTokenOut(wft.address, amount, 9700);
-    console.log("WFT out", divDec(amount));
-    console.log("Slippage Tolerance", "3%");
-    console.log();
-    console.log("USDC in", divDec6(res.quoteRawIn));
-    console.log("slippage", divDec(res.slippage));
-    console.log("min Token out", divDec(res.minTokenAmtOut));
-    console.log("min Token out", divDec(res.autoMinTokenAmtOut));
-  });
-
-  it("Quote sell out", async function () {
-    console.log("******************************************************");
-    const amount = convert("10", 6);
-    let res = await multicall
-      .connect(owner)
-      .sellQuoteOut(wft.address, amount, 9950);
-    console.log("USDC out", divDec6(amount));
-    console.log("Slippage Tolerance", "0.5%");
-    console.log();
-    console.log("WFT in", divDec(res.tokenAmtIn));
-    console.log("slippage", divDec(res.slippage));
-    console.log("min USDC out", divDec6(res.minQuoteRawOut));
-    console.log("min USDC out", divDec6(res.autoMinQuoteRawOut));
-  });
-
   it("Token Data", async function () {
     console.log("******************************************************");
     let res = await multicall.getTokenData(wft.address, user2.address);
@@ -883,42 +853,127 @@ describe("local: test1", function () {
 
   it("User1 collects content", async function () {
     console.log("******************************************************");
-    const res = await multicall.getContentData(wft.address, 1);
+    let res = await multicall.getContentData(wft.address, 1);
     console.log(res);
-    const amount = res.nextPrice;
+    const epochId = res.epochId;
+    const amount = res.price;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    await router
+      .connect(user1)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
     console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
   });
 
   it("User1 collects content", async function () {
     console.log("******************************************************");
-    const res = await multicall.getContentData(wft.address, 1);
+    let res = await multicall.getContentData(wft.address, 1);
     console.log(res);
-    const amount = res.nextPrice;
+    const epochId = res.epochId;
+    const amount = res.price;
     await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    await router
+      .connect(user1)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
     console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
   });
 
   it("User2 collects content", async function () {
     console.log("******************************************************");
-    const res = await multicall.getContentData(wft.address, 1);
+    let res = await multicall.getContentData(wft.address, 1);
     console.log(res);
-    const amount = res.nextPrice;
+    const epochId = res.epochId;
+    const amount = res.price;
     await usdc.connect(user2).approve(router.address, amount);
-    await router.connect(user2).collectContent(wft.address, 1);
+    await router
+      .connect(user2)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
     console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
   });
 
   it("User0 collects content", async function () {
     console.log("******************************************************");
-    const res = await multicall.getContentData(wft.address, 1);
+    let res = await multicall.getContentData(wft.address, 1);
     console.log(res);
-    const amount = res.nextPrice;
+    const epochId = res.epochId;
+    const amount = res.price;
     await usdc.connect(user0).approve(router.address, amount);
-    await router.connect(user0).collectContent(wft.address, 1);
+    await router
+      .connect(user0)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
     console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
   });
 
   it("Token Data", async function () {
@@ -927,25 +982,24 @@ describe("local: test1", function () {
     console.log(res);
   });
 
-  it("User1 collects content", async function () {
+  it("User2 collects content", async function () {
     console.log("******************************************************");
-    const res = await multicall.getContentData(wft.address, 1);
+    let res = await multicall.getContentData(wft.address, 1);
     console.log(res);
-    const amount = res.nextPrice;
-    await usdc.connect(user1).approve(router.address, amount);
-    await router.connect(user1).collectContent(wft.address, 1);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user2).approve(router.address, amount);
+    await router
+      .connect(user2)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
     console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
   });
 
   it("Token Data", async function () {
     console.log("******************************************************");
     let res = await multicall.getTokenData(wft.address, user0.address);
-    console.log(res);
-  });
-
-  it("Token Data", async function () {
-    console.log("******************************************************");
-    let res = await multicall.getTokenData(wft.address, user1.address);
     console.log(res);
   });
 
@@ -970,6 +1024,133 @@ describe("local: test1", function () {
   it("Token Data", async function () {
     console.log("******************************************************");
     let res = await multicall.getTokenData(wft.address, user1.address);
+    console.log(res);
+  });
+
+  it("User2 collects content", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user2).approve(router.address, amount);
+    await router
+      .connect(user2)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+    console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800 * 3]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("User1 collects content", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user1).approve(router.address, amount);
+    await router
+      .connect(user1)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+    console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800 * 4]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("User0 collects content", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user0).approve(router.address, amount);
+    await router
+      .connect(user0)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+    console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [604800 * 2]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("User1 collects content", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user1).approve(router.address, amount);
+    await router
+      .connect(user1)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+    console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("Forward time", async function () {
+    console.log("******************************************************");
+    await network.provider.send("evm_increaseTime", [3600 * 24]);
+    await network.provider.send("evm_mine");
+    console.log("- time forwarded");
+  });
+
+  it("Content Data", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+  });
+
+  it("User1 collects content", async function () {
+    console.log("******************************************************");
+    let res = await multicall.getContentData(wft.address, 1);
+    console.log(res);
+    const epochId = res.epochId;
+    const amount = res.price;
+    await usdc.connect(user1).approve(router.address, amount);
+    await router
+      .connect(user1)
+      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+    console.log("- content collected");
+    res = await multicall.getContentData(wft.address, 1);
     console.log(res);
   });
 });

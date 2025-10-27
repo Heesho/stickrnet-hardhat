@@ -76,9 +76,10 @@ describe("local: test0", function () {
     const wftSymbol = "wft";
     const wftUri = "https://wavefront.io/wft";
 
+    await usdc.connect(user0).approve(router.address, convert("1", 6));
     await router
       .connect(user0)
-      .createToken(wftName, wftSymbol, wftUri, false, 0);
+      .createToken(wftName, wftSymbol, wftUri, false, convert("1", 6));
     wft = await ethers.getContractAt("Token", await tokenFactory.lastToken());
     console.log("- wft created");
   });
