@@ -26,20 +26,12 @@ interface IToken {
     function rawToWad(uint256 raw) external view returns (uint256);
     function wadToRaw(uint256 wad) external view returns (uint256);
 
-    function buy(
-        uint256 amountQuoteIn,
-        uint256 minAmountTokenOut,
-        uint256 expireTimestamp,
-        address to,
-        address provider
-    ) external returns (uint256 amountTokenOut);
-    function sell(
-        uint256 amountTokenIn,
-        uint256 minAmountQuoteOut,
-        uint256 expireTimestamp,
-        address to,
-        address provider
-    ) external returns (uint256 amountQuoteOut);
+    function buy(uint256 quoteRawIn, uint256 minTokenAmtOut, uint256 deadline, address to, address provider)
+        external
+        returns (uint256 tokenAmtOut);
+    function sell(uint256 tokenAmtIn, uint256 minQuoteRawOut, uint256 deadline, address to, address provider)
+        external
+        returns (uint256 quoteRawOut);
     function borrow(address to, uint256 quoteRaw) external;
     function repay(address to, uint256 quoteRaw) external;
     function heal(uint256 quoteRaw) external;

@@ -292,10 +292,10 @@ contract ContentFactory {
         address quote,
         address rewarderFactory,
         address owner,
-        uint256 initialPrice,
+        uint256 minInitPrice,
         bool isModerated
     ) external returns (address, address) {
-        Content content = new Content(name, symbol, uri, token, quote, rewarderFactory, initialPrice, isModerated);
+        Content content = new Content(name, symbol, uri, token, quote, rewarderFactory, minInitPrice, isModerated);
         lastContent = address(content);
         content.transferOwnership(owner);
         emit ContentFactory__Created(lastContent);

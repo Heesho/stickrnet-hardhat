@@ -25,7 +25,7 @@ contract Token is ERC20, ERC20Permit, ERC20Votes, ReentrancyGuard {
     address public immutable rewarder;
 
     uint8 public immutable quoteDecimals;
-    uint256 internal immutable quoteScale;
+    uint256 public immutable quoteScale;
 
     uint256 public maxSupply;
 
