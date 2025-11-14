@@ -860,7 +860,7 @@ describe("local: test1", function () {
     await usdc.connect(user1).approve(router.address, amount);
     await router
       .connect(user1)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -940,7 +940,7 @@ describe("local: test1", function () {
     await usdc.connect(user1).approve(router.address, amount);
     await router
       .connect(user1)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -955,7 +955,7 @@ describe("local: test1", function () {
     await usdc.connect(user2).approve(router.address, amount);
     await router
       .connect(user2)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -970,7 +970,7 @@ describe("local: test1", function () {
     await usdc.connect(user0).approve(router.address, amount);
     await router
       .connect(user0)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -991,7 +991,7 @@ describe("local: test1", function () {
     await usdc.connect(user2).approve(router.address, amount);
     await router
       .connect(user2)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -1036,7 +1036,7 @@ describe("local: test1", function () {
     await usdc.connect(user2).approve(router.address, amount);
     await router
       .connect(user2)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -1064,7 +1064,7 @@ describe("local: test1", function () {
     await usdc.connect(user1).approve(router.address, amount);
     await router
       .connect(user1)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -1092,7 +1092,7 @@ describe("local: test1", function () {
     await usdc.connect(user0).approve(router.address, amount);
     await router
       .connect(user0)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -1120,7 +1120,7 @@ describe("local: test1", function () {
     await usdc.connect(user1).approve(router.address, amount);
     await router
       .connect(user1)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);
@@ -1148,7 +1148,7 @@ describe("local: test1", function () {
     await usdc.connect(user1).approve(router.address, amount);
     await router
       .connect(user1)
-      .collectContent(wft.address, 1, epochId, 1861590734, amount);
+      .collectContent(wft.address, AddressZero, 1, epochId, 1861590734, amount);
     console.log("- content collected");
     res = await multicall.getContentData(wft.address, 1);
     console.log(res);

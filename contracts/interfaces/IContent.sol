@@ -26,7 +26,7 @@ interface IContent {
     function owner() external view returns (address);
 
     function create(address to, string memory tokenUri) external returns (uint256 tokenId);
-    function collect(address to, uint256 tokenId, uint256 epochId, uint256 deadline, uint256 maxPrice)
+    function collect(address to, address provider, uint256 tokenId, uint256 epochId, uint256 deadline, uint256 maxPrice)
         external
         returns (uint256 price);
     function distribute() external;

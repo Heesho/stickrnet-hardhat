@@ -7,7 +7,7 @@ const AddressZero = "0x0000000000000000000000000000000000000000";
 /*===========================  SETTINGS  ============================*/
 
 const TREASURY_ADDRESS = "0x7a8C895E7826F66e1094532cB435Da725dc3868f"; // Treasury Address
-const SN1 = "0x5DD32c4909d80b1397c9665d048EF61EA065617C"; // SN1 Address
+const SN1 = "0x8F8C00F7CAcBa66d1c7f3141cD95DfE56c7B4253"; // SN1 Address
 const SN2 = ""; // SN2 Address
 const SN3 = ""; // SN3 Address
 
@@ -35,28 +35,28 @@ async function getContracts() {
 
   tokenFactory = await ethers.getContractAt(
     "contracts/TokenFactory.sol:TokenFactory",
-    "0x88e52940E62E150619cAa54b1bc51b1103a2EA9F"
+    "0xC23E316705Feef0922F0651488264db90133ED38"
   );
   contentFactory = await ethers.getContractAt(
     "contracts/ContentFactory.sol:ContentFactory",
-    "0x9E5eA3b8AdDA08dFb918370811c1496b114DF97e"
+    "0x30F8e847fCf1bC750A1fDCE7bd329FEc4c8277F9"
   );
   rewarderFactory = await ethers.getContractAt(
     "contracts/RewarderFactory.sol:RewarderFactory",
-    "0xDbC6028935b3b5b96451C48bD66Eff0918eA59A9"
+    "0x2169a51D582D7D94F19Ad1EC8dCd4271E91D1fA0"
   );
 
   core = await ethers.getContractAt(
     "contracts/Core.sol:Core",
-    "0x9Bea9c75063095ba8C6bF60F6B50858B140bF869"
+    "0x255F278Ad8Dff1C1FDCfeD97825522Df305D8B32"
   );
   multicall = await ethers.getContractAt(
     "contracts/Multicall.sol:Multicall",
-    "0x0c62B9A9763F4BBF42ba736440E7aC9c2B98f851"
+    "0x0a0C653F3FB69906dFC77b845a24c285071d3144"
   );
   router = await ethers.getContractAt(
     "contracts/Router.sol:Router",
-    "0x0d6fC0Cf23F0B78B1280c4037cA9B47F13Ca19e4"
+    "0x44CB84344243cC29bF63C417E4A00B124dB7dc8F"
   );
 
   token = await ethers.getContractAt("contracts/TokenFactory.sol:Token", SN1);
@@ -375,23 +375,20 @@ async function main() {
   // await createTokenTx.wait();
   // console.log("Token Deployed at:", await core.index_Token(1));
 
-  // console.log("Mint USDC");
-  // const mintTx = await usdc.mint(wallet.address, convert("10000", 6));
-  // await mintTx.wait();
-  // console.log("USDC Balance: ", await usdc.balanceOf(wallet.address));
-
   // console.log("Buy Token");
   // const buyAmount = convert("1000", 6);
   // const approveTx = await usdc
   //   .connect(wallet)
   //   .approve(router.address, buyAmount, { gasPrice: ethers.gasPrice });
   // await approveTx.wait();
+  // await sleep(5000);
   // const buyTx = await router
   //   .connect(wallet)
   //   .buy(token.address, AddressZero, buyAmount, 0, 0, {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await buyTx.wait();
+  // await sleep(5000);
   // console.log(
   //   "Token bought: ",
   //   ethers.utils.formatUnits(await token.balanceOf(wallet.address), 18)
@@ -403,13 +400,18 @@ async function main() {
   //   .connect(wallet)
   //   .approve(router.address, sellAmount, { gasPrice: ethers.gasPrice });
   // await approveTx.wait();
+  // await sleep(5000);
   // const sellTx = await router
   //   .connect(wallet)
   //   .sell(token.address, AddressZero, sellAmount, 0, 0, {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await sellTx.wait();
-  // console.log("Token sold: ", await token.balanceOf(wallet.address));
+  // await sleep(5000);
+  // console.log(
+  //   "Token sold: ",
+  //   ethers.utils.formatUnits(await token.balanceOf(wallet.address), 18)
+  // );
 
   // console.log("Borrow Credit");
   // const borrowAmount = convert("1", 6);
@@ -419,6 +421,7 @@ async function main() {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await borrowTx.wait();
+  // await sleep(5000);
   // console.log("Token borrowed: ", await token.account_DebtRaw(wallet.address));
 
   // console.log("Repay Debt");
@@ -427,12 +430,14 @@ async function main() {
   //   .connect(wallet)
   //   .approve(token.address, repayAmount, { gasPrice: ethers.gasPrice });
   // await approveTx.wait();
+  // await sleep(5000);
   // const repayTx = await token
   //   .connect(wallet)
   //   .repay(wallet.address, repayAmount, {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await repayTx.wait();
+  // await sleep(5000);
   // console.log("Token debt: ", await token.account_DebtRaw(wallet.address));
 
   // console.log("Heal Token");
@@ -441,10 +446,12 @@ async function main() {
   //   .connect(wallet)
   //   .approve(token.address, healAmount, { gasPrice: ethers.gasPrice });
   // await approveTx.wait();
+  // await sleep(5000);
   // const healTx = await token.connect(wallet).heal(healAmount, {
   //   gasPrice: ethers.gasPrice,
   // });
   // await healTx.wait();
+  // await sleep(5000);
   // console.log("Token price: ", await token.getMarketPrice());
 
   // console.log("Burn Token");
@@ -453,6 +460,7 @@ async function main() {
   //   gasPrice: ethers.gasPrice,
   // });
   // await burnTx.wait();
+  // await sleep(5000);
   // console.log("Token price: ", await token.getMarketPrice());
 
   // console.log("Create Content");
@@ -466,6 +474,7 @@ async function main() {
   //     }
   //   );
   // await contentTx.wait();
+  // await sleep(5000);
   // console.log("Content created: ", await content.tokenURI(1));
 
   // console.log("Curate Content");
@@ -477,12 +486,22 @@ async function main() {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await approveTx.wait();
+  // await sleep(5000);
   // const collectTx = await router
   //   .connect(wallet)
-  //   .collectContent(token.address, 1, res.epochId, 1871590734, res.price, {
-  //     gasPrice: ethers.gasPrice,
-  //   });
+  //   .collectContent(
+  //     token.address,
+  //     AddressZero,
+  //     1,
+  //     res.epochId,
+  //     1871590734,
+  //     res.price,
+  //     {
+  //       gasPrice: ethers.gasPrice,
+  //     }
+  //   );
   // await collectTx.wait();
+  // await sleep(5000);
   // console.log("Content Price: ", await content.getPrice(1));
 
   // console.log("Transfer Token");
@@ -494,6 +513,7 @@ async function main() {
   //     gasPrice: ethers.gasPrice,
   //   });
   // await transferTx.wait();
+  // await sleep(5000);
   // console.log("Token transferred: ", await token.balanceOf(targetAddress));
 
   // console.log("Claim Reward");
@@ -501,6 +521,7 @@ async function main() {
   //   gasPrice: ethers.gasPrice,
   // });
   // await claimTx.wait();
+  // await sleep(5000);
   // console.log("Reward claimed: ");
 
   // console.log("Update uri");
@@ -513,6 +534,7 @@ async function main() {
   //     }
   //   );
   // await updateUriTx.wait();
+  // await sleep(5000);
   // console.log("Uri updated: ", await content.uri());
 
   // console.log("Token Data");
