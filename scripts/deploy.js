@@ -537,6 +537,14 @@ async function main() {
   // await sleep(5000);
   // console.log("Uri updated: ", await content.uri());
 
+  // console.log("Set Treasury");
+  // const setTreasuryTx = await core.setTreasury(TREASURY_ADDRESS, {
+  //   gasPrice: ethers.gasPrice,
+  // });
+  // await setTreasuryTx.wait();
+  // await sleep(5000);
+  // console.log("Treasury set: ", await core.treasury());
+
   // console.log("Token Data");
   // const res = await multicall.getTokenData(token.address, AddressZero);
   // console.log(res);
